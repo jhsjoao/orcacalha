@@ -13,6 +13,10 @@
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="app.css">
+  <script>
+    window.__erros = [];
+    window.addEventListener('error', function (e) { window.__erros.push((e.message || 'erro') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '')); });
+  </script>
 </head>
 <body>
   <header class="top" id="top">
@@ -43,19 +47,21 @@
   <script src="app.js"></script>
   <script>
     window.addEventListener('load', function () {
-      var faltando = [];
-      if (!window.jspdf) faltando.push('jspdf.umd.min.js');
-      if (!window.Calc) faltando.push('calc.js');
-      if (!window.Store) faltando.push('store.js');
-      if (!window.PDF) faltando.push('pdf.js');
-      if (!document.querySelector('#app').children.length) faltando.push('app.js');
-      if (getComputedStyle(document.body).display !== 'flex') faltando.push('app.css');
-      if (faltando.length) {
+      setTimeout(function () {
+        if (window.__orcaOK) return;
+        var faltando = [];
+        if (!window.jspdf) faltando.push('jspdf.umd.min.js');
+        if (!window.Calc) faltando.push('calc.js');
+        if (!window.Store) faltando.push('store.js');
+        if (!window.PDF) faltando.push('pdf.js');
+        if (!faltando.length) faltando.push('app.js');
+        var erros = (window.__erros || []).slice(0, 3);
         document.body.innerHTML = '<div style="font-family:sans-serif;padding:24px;line-height:1.5">' +
           '<h2 style="color:#c0392b">O app não carregou por completo</h2>' +
-          '<p>Estes arquivos não foram encontrados no servidor:</p><ul><li>' + faltando.join('</li><li>') + '</li></ul>' +
-          '<p>Envie esses arquivos para o mesmo lugar do <b>index.html</b> no GitHub e recarregue a página.</p></div>';
-      }
+          '<p>Arquivo(s) com problema:</p><ul><li>' + faltando.join('</li><li>') + '</li></ul>' +
+          (erros.length ? '<p>Erro informado pelo navegador:</p><pre style="white-space:pre-wrap;background:#f4f4f4;padding:8px;border-radius:8px;font-size:12px">' + erros.join('\n').replace(/</g, '&lt;') + '</pre>' : '') +
+          '<p>Confira se esses arquivos estão no GitHub, no mesmo lugar do <b>index.html</b>, e recarregue a página.</p></div>';
+      }, 2500);
     });
   </script>
 </body>

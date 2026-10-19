@@ -1,5 +1,5 @@
 /* Service worker: guarda o app no aparelho para funcionar sem internet. */
-const VERSAO = 'orcacalha-v1.1.0';
+const VERSAO = 'orcacalha-v1.1.1';
 const ARQUIVOS = [
   './',
   './index.html',
