@@ -1,17 +1,17 @@
 /* Service worker: guarda o app no aparelho para funcionar sem internet. */
-const VERSAO = 'orcacalha-v1.0.0';
+const VERSAO = 'orcacalha-v1.0.1';
 const ARQUIVOS = [
   './',
   './index.html',
-  './css/app.css',
-  './js/calc.js',
-  './js/store.js',
-  './js/pdf.js',
-  './js/app.js',
-  './vendor/jspdf.umd.min.js',
+  './app.css',
+  './calc.js',
+  './store.js',
+  './pdf.js',
+  './app.js',
+  './jspdf.umd.min.js',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

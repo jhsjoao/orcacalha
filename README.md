@@ -17,9 +17,10 @@ Não precisa de servidor, banco de dados nem mensalidade.
 
 1. Crie uma conta em <https://github.com> (se ainda não tiver).
 2. Clique em **New repository**. Nome: `orcacalha`. Marque **Public** e clique em **Create repository**.
-3. Na página do repositório, clique em **uploading an existing file** (ou **Add file → Upload files**).
-4. Descompacte o `orcacalha.zip` no computador e **arraste o conteúdo da pasta** para a página: `index.html`, `manifest.webmanifest`, `sw.js`, `.nojekyll` e as pastas `css`, `js`, `icons` e `vendor`. Não arraste o arquivo .zip.
-   - O `.nojekyll` fica oculto no Windows e no Mac. Se ele não subir, não tem problema: o app funciona sem ele.
+3. Na página do repositório, clique em **Add file → Upload files**. Prefira fazer isso pelo **computador**.
+4. Descompacte o `orcacalha.zip`. Abra a pasta, **selecione todos os arquivos** (Ctrl+A no Windows ou Cmd+A no Mac) e arraste para a página do GitHub. Todos ficam soltos, sem subpastas. Os essenciais são `index.html`, `app.css`, `app.js`, `calc.js`, `store.js`, `pdf.js`, `jspdf.umd.min.js`, `sw.js`, `manifest.webmanifest` e os ícones `.png`.
+   - Confira na lista do GitHub se **todos** aparecem antes de confirmar.
+   - Se algum arquivo faltar, o próprio app avisa na tela qual é.
 5. Clique em **Commit changes**.
 6. Vá em **Settings → Pages**. Em *Build and deployment*, escolha **Deploy from a branch**, branch **main**, pasta **/ (root)**, e clique em **Save**.
 7. Espere 1 a 2 minutos. O endereço do app aparece no topo da página de Pages, no formato
@@ -52,7 +53,7 @@ Se trocar de celular, ou se os dados do navegador forem apagados, instale o app 
 ## 5. Atualizar o app
 
 1. Suba os arquivos alterados no repositório, substituindo os antigos.
-2. Em `sw.js`, aumente a versão na primeira linha (ex.: `orcacalha-v1.0.1`). Isso faz os celulares baixarem a versão nova.
+2. Em `sw.js`, aumente a versão na primeira linha (ex.: de `orcacalha-v1.0.1` para `orcacalha-v1.0.2`). Isso faz os celulares baixarem a versão nova.
 3. No celular, feche e abra o app duas vezes.
 
 ---
@@ -63,13 +64,13 @@ Se trocar de celular, ou se os dados do navegador forem apagados, instale o app 
 index.html              página única do app
 manifest.webmanifest    nome, ícones e cores para instalação
 sw.js                   service worker (funcionamento offline)
-css/app.css             visual
-js/calc.js              cálculos (abas, áreas, totais, lista de corte)
-js/store.js             armazenamento no aparelho e backup
-js/pdf.js               geração do PDF do orçamento
-js/app.js               telas e navegação
-vendor/jspdf.umd.min.js biblioteca jsPDF (licença MIT)
-icons/                  ícones do app
+app.css                 visual
+calc.js                 cálculos (abas, áreas, totais, lista de corte)
+store.js                armazenamento no aparelho e backup
+pdf.js                  geração do PDF do orçamento
+app.js                  telas e navegação
+jspdf.umd.min.js        biblioteca jsPDF (licença MIT)
+*.png                   ícones do app
 ```
 
 Desenvolvido como parte do projeto extensionista *Empreendedorismo e Desenvolvimento de Soluções*, PUCRS, Tecnólogo em Gestão da Tecnologia da Informação.
