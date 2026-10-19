@@ -1,9 +1,9 @@
 /* Service worker: guarda o app no aparelho para funcionar sem internet.
  * Estratégia: sempre tenta a versão mais nova na internet; usa a cópia guardada só se estiver offline. */
-const VERSAO = 'orcacalha-v1.1.2';
+const VERSAO = 'orcacalha-v1.1.3';
 const ARQUIVOS = [
   './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
-  './app.css?v=1.1.2', './calc.js?v=1.1.2', './store.js?v=1.1.2', './pdf.js?v=1.1.2', './app.js?v=1.1.2', './jspdf.umd.min.js?v=1.1.2',
+  './app.css?v=1.1.3', './calc.js?v=1.1.3', './store.js?v=1.1.3', './pdf.js?v=1.1.3', './app.js?v=1.1.3', './jspdf.umd.min.js?v=1.1.3',
 ];
 
 self.addEventListener('install', (e) => {

@@ -359,6 +359,37 @@
       return { ico: '🔩', nome: it.descricao || 'Item sem descrição', det: C.fmtNum(r.qtd) + ' ' + (it.unidade || 'un') + ' × ' + C.fmtMoeda(r.preco), falta, total: r.total };
     }
 
+    function listaProdutos(tipo) { return tipo === 'perfil' ? (cfg().perfis || []) : (cfg().itensPadrao || []); }
+    function produtoDoItem(it) {
+      const arr = listaProdutos(it.tipo);
+      if (it.produtoId) { const p = arr.find((x) => x.id === it.produtoId); if (p) return p; }
+      const nome = ((it.tipo === 'perfil' ? it.nome : it.descricao) || '').trim().toLowerCase();
+      if (!nome) return null;
+      return arr.find((x) => ((it.tipo === 'perfil' ? x.nome : x.descricao) || '').trim().toLowerCase() === nome && (it.tipo !== 'perfil' || !x.material || x.material === it.material)) || null;
+    }
+    function selectProduto(it) {
+      const arr = listaProdutos(it.tipo); const atual = produtoDoItem(it);
+      const nm = (x) => (it.tipo === 'perfil' ? x.nome : x.descricao) || 'Sem nome';
+      return `<label class="f">Produto<select class="in" data-prod-sel>
+        ${arr.map((x) => `<option value="${h(x.id)}" ${atual && atual.id === x.id ? 'selected' : ''}>${h(nm(x))}${it.tipo === 'perfil' && x.material ? ' · ' + h(x.material) : ''}${C.parseNum(x.preco) ? ' — ' + C.fmtMoeda(x.preco) : ''}</option>`).join('')}
+        <option value="" ${atual ? '' : 'selected'}>✏️ Outro (digitar)</option></select></label>`;
+    }
+    function selectMaterial(valor) {
+      const mats = (cfg().materiais || []).slice();
+      if (valor && !mats.includes(valor)) mats.unshift(valor);
+      return `<select class="in" data-k="material"><option value="" ${valor ? '' : 'selected'}>Material…</option>${mats.map((m) => `<option ${m === valor ? 'selected' : ''}>${h(m)}</option>`).join('')}</select>`;
+    }
+    function aplicarProduto(it, p) {
+      if (!p) { it.produtoId = ''; return; }
+      it.produtoId = p.id;
+      if (it.tipo === 'perfil') {
+        Object.assign(it, { nome: p.nome || '', abas: p.abas || '', modo: p.modo || 'm2', preco: C.parseNum(p.preco) ? String(p.preco) : it.preco });
+        if (p.material) it.material = p.material;
+      } else {
+        Object.assign(it, { descricao: p.descricao || '', unidade: p.unidade || 'un', preco: C.parseNum(p.preco) ? String(p.preco) : it.preco });
+      }
+    }
+
     function itemHTML(it, i) {
       if (!abertos.has(i)) {
         const r = resumoItem(it);
@@ -372,9 +403,10 @@
       if (it.tipo === 'perfil') {
         return `<div class="item open" data-i="${i}">
           ${topo('📐 Perfil ' + (i + 1))}
-          <input class="in" data-k="nome" value="${h(it.nome)}" placeholder="Nome (ex.: Calha moldura)">
-          <div class="grid2"><input class="in" data-k="material" list="materiais" value="${h(it.material)}" placeholder="Material">
-          <input class="in" data-k="metros" inputmode="decimal" value="${h(it.metros)}" placeholder="Metros lineares"></div>
+          ${selectProduto(it)}
+          ${produtoDoItem(it) ? '' : `<input class="in" data-k="nome" value="${h(it.nome)}" placeholder="Nome do perfil (ex.: Calha moldura)">`}
+          <div class="grid2"><label class="f">Material${selectMaterial(it.material)}</label>
+          <label class="f">Metros lineares<input class="in" data-k="metros" inputmode="decimal" value="${h(it.metros)}" placeholder="0,0"></label></div>
           <label class="f">Abas do perfil (cm), separadas por +<input class="in" data-k="abas" inputmode="decimal" value="${h(it.abas)}" placeholder="3 + 2 + 12 + 15 + 10 + 3"></label>
           <div data-svg>${svgChapa(it.abas)}</div>
           <div class="seg" data-modo>${[['m2', 'Preço por m² de chapa'], ['ml', 'Preço por metro linear']].map(([v, l]) => `<button type="button" data-v="${v}" class="${(it.modo || 'm2') === v ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -385,9 +417,10 @@
       }
       return `<div class="item open" data-i="${i}">
         ${topo('🔩 Item ' + (i + 1))}
-        <input class="in" data-k="descricao" value="${h(it.descricao)}" placeholder="Descrição (ex.: Instalação, suporte, bocal)">
-        <div class="grid2"><input class="in" data-k="qtd" inputmode="decimal" value="${h(it.qtd)}" placeholder="Quantidade">
-        <select class="in" data-k="unidade">${['un', 'm', 'm²', 'vb', 'h'].map((u) => `<option ${it.unidade === u ? 'selected' : ''}>${u}</option>`).join('')}</select></div>
+        ${selectProduto(it)}
+        ${produtoDoItem(it) ? '' : `<input class="in" data-k="descricao" value="${h(it.descricao)}" placeholder="Descrição (ex.: Instalação, suporte, bocal)">`}
+        <div class="grid2"><label class="f">Quantidade<input class="in" data-k="qtd" inputmode="decimal" value="${h(it.qtd)}" placeholder="0"></label>
+        <label class="f">Unidade<select class="in" data-k="unidade">${['un', 'm', 'm²', 'vb', 'h'].map((u) => `<option ${it.unidade === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
         <label class="f">Preço unitário (R$)<input class="in" data-k="preco" inputmode="decimal" value="${h(it.preco)}" placeholder="0,00"></label>
         <div class="calc" data-calc></div>
         <button class="lnk" data-prod="${i}" type="button">☆ Salvar nos produtos</button></div>`;
@@ -461,7 +494,18 @@
       atualizarItem(i); atualizarTotais(); agendarSalvar();
     });
     box.addEventListener('change', (e) => {
-      const el = e.target.closest('.item'); if (!el || !e.target.dataset.k) return;
+      const el = e.target.closest('.item'); if (!el) return;
+      if (e.target.matches('[data-prod-sel]')) {
+        const i = Number(el.dataset.i); const it = orc.itens[i];
+        const p = listaProdutos(it.tipo).find((x) => x.id === e.target.value) || null;
+        aplicarProduto(it, p);
+        if (!p) { if (it.tipo === 'perfil') it.nome = ''; else it.descricao = ''; }
+        renderItens(); agendarSalvar();
+        const novo = $(`.item[data-i="${i}"]`, box);
+        if (novo) { const f = p ? $(it.tipo === 'perfil' ? '[data-k=metros]' : '[data-k=qtd]', novo) : $(it.tipo === 'perfil' ? '[data-k=nome]' : '[data-k=descricao]', novo); if (f) f.focus(); }
+        return;
+      }
+      if (!e.target.dataset.k) return;
       orc.itens[Number(el.dataset.i)][e.target.dataset.k] = e.target.value; atualizarItem(Number(el.dataset.i)); atualizarTotais(); agendarSalvar();
     });
     box.addEventListener('click', async (e) => {
@@ -503,11 +547,11 @@
     }
 
     $('#addPerfil').addEventListener('click', () => escolherProduto('perfil', (p) => {
-      orc.itens.push({ tipo: 'perfil', nome: p ? p.nome : '', abas: p ? p.abas : '', material: (p && p.material) || (cfg().materiais || [])[0] || '', metros: '', modo: p ? p.modo || 'm2' : 'm2', preco: p && C.parseNum(p.preco) ? String(p.preco) : '' });
+      orc.itens.push({ tipo: 'perfil', produtoId: p ? p.id : '', nome: p ? p.nome : '', abas: p ? p.abas : '', material: (p && p.material) || (cfg().materiais || [])[0] || '', metros: '', modo: p ? p.modo || 'm2' : 'm2', preco: p && C.parseNum(p.preco) ? String(p.preco) : '' });
       focarNovo(p ? 'metros' : 'nome');
     }));
     $('#addItem').addEventListener('click', () => escolherProduto('item', (p) => {
-      orc.itens.push({ tipo: 'item', descricao: p ? p.descricao : '', unidade: p ? p.unidade : 'un', qtd: '1', preco: p && C.parseNum(p.preco) ? String(p.preco) : '' });
+      orc.itens.push({ tipo: 'item', produtoId: p ? p.id : '', descricao: p ? p.descricao : '', unidade: p ? p.unidade : 'un', qtd: '1', preco: p && C.parseNum(p.preco) ? String(p.preco) : '' });
       focarNovo(p ? 'qtd' : 'descricao');
     }));
 
@@ -837,7 +881,7 @@
       <div class="card stack"><h3>Demonstração</h3><div class="sm muted">Carrega clientes e orçamentos fictícios para mostrar o app. Não use depois de começar a cadastrar dados reais.</div>
         <button class="btn line block" id="demo">Carregar dados de exemplo</button>
         <button class="btn line block" id="zerar" style="color:var(--bad)">Apagar todos os dados</button></div>
-      <div class="sm muted" style="text-align:center">OrçaCalha v1.1.2 · funciona sem internet</div>`;
+      <div class="sm muted" style="text-align:center">OrçaCalha v1.1.3 · funciona sem internet</div>`;
 
     $$('[data-e]').forEach((i) => i.addEventListener('change', () => { e[i.dataset.e] = i.value.trim(); S.save(); toast('Salvo'); }));
     $$('[data-c]').forEach((i) => i.addEventListener('change', () => { c.condicoes[i.dataset.c] = i.value.trim(); S.save(); toast('Salvo'); }));
