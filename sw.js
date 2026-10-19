@@ -1,17 +1,9 @@
-/* Service worker: guarda o app no aparelho para funcionar sem internet. */
-const VERSAO = 'orcacalha-v1.1.1';
+/* Service worker: guarda o app no aparelho para funcionar sem internet.
+ * Estratégia: sempre tenta a versão mais nova na internet; usa a cópia guardada só se estiver offline. */
+const VERSAO = 'orcacalha-v1.1.2';
 const ARQUIVOS = [
-  './',
-  './index.html',
-  './app.css',
-  './calc.js',
-  './store.js',
-  './pdf.js',
-  './app.js',
-  './jspdf.umd.min.js',
-  './manifest.webmanifest',
-  './icon-192.png',
-  './icon-512.png',
+  './', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
+  './app.css?v=1.1.2', './calc.js?v=1.1.2', './store.js?v=1.1.2', './pdf.js?v=1.1.2', './app.js?v=1.1.2', './jspdf.umd.min.js?v=1.1.2',
 ];
 
 self.addEventListener('install', (e) => {
@@ -29,21 +21,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  // Rede primeiro para a página (pega atualizações), cache para o resto.
-  if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(VERSAO).then((c) => c.put('./index.html', copy));
-        return res;
-      }).catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
   e.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      if (res.ok) { const copy = res.clone(); caches.open(VERSAO).then((c) => c.put(req, copy)); }
-      return res;
-    }))
+    fetch(req, { cache: 'no-cache' })
+      .then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(VERSAO).then((c) => c.put(req.mode === 'navigate' ? './index.html' : req, copy)); }
+        return res;
+      })
+      .catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req).then((hit) => hit || caches.match(req, { ignoreSearch: true })))
   );
 });

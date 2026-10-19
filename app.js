@@ -837,7 +837,7 @@
       <div class="card stack"><h3>Demonstração</h3><div class="sm muted">Carrega clientes e orçamentos fictícios para mostrar o app. Não use depois de começar a cadastrar dados reais.</div>
         <button class="btn line block" id="demo">Carregar dados de exemplo</button>
         <button class="btn line block" id="zerar" style="color:var(--bad)">Apagar todos os dados</button></div>
-      <div class="sm muted" style="text-align:center">OrçaCalha v1.1 · funciona sem internet</div>`;
+      <div class="sm muted" style="text-align:center">OrçaCalha v1.1.2 · funciona sem internet</div>`;
 
     $$('[data-e]').forEach((i) => i.addEventListener('change', () => { e[i.dataset.e] = i.value.trim(); S.save(); toast('Salvo'); }));
     $$('[data-c]').forEach((i) => i.addEventListener('change', () => { c.condicoes[i.dataset.c] = i.value.trim(); S.save(); toast('Salvo'); }));
@@ -909,6 +909,14 @@
   render();
   window.__orcaOK = true;
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e)));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then((reg) => reg.update()).catch((e) => console.warn('SW', e));
+    });
+    const tinhaSW = !!navigator.serviceWorker.controller;
+    let recarregou = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (recarregou || !tinhaSW) return;
+      recarregou = true; location.reload();
+    });
   }
 })();
