@@ -253,7 +253,7 @@
     if (!c.tipo) { app.innerHTML = '<div class="empty">Compromisso não encontrado.</div>'; return; }
     $('#tituloTela').textContent = novo ? 'Novo compromisso' : 'Editar compromisso';
     app.innerHTML = `<div class="card stack">
-      <label class="f">Tipo<div class="seg" id="tipo">${Object.keys(TIPOS).map((t) => `<button type="button" data-v="${t}" class="${c.tipo === t ? 'on' : ''}">${h(TIPOS[t].replace('Enviar ', ''))}</button>`).join('')}</div></label>
+      <label class="f">Tipo<div class="seg wrap" id="tipo">${Object.keys(TIPOS).map((t) => `<button type="button" data-v="${t}" class="${c.tipo === t ? 'on' : ''}">${h({ visita: 'Visita', orcamento: 'Orçamento', instalacao: 'Instalação', manutencao: 'Manutenção' }[t])}</button>`).join('')}</div></label>
       <div class="grid2"><label class="f">Data<input class="in" type="date" id="data" value="${h(c.data)}"></label>
       <label class="f">Horário<input class="in" type="time" id="hora" value="${h(c.hora)}"></label></div>
       <label class="f">Cliente${selectCliente(c.clienteId)}</label>
@@ -304,7 +304,7 @@
     if (busca) lista = lista.filter((o) => nomeCliente(o.clienteId).toLowerCase().includes(busca) || String(o.numero).includes(busca));
     sub(S.get().orcamentos.length + ' orçamento(s)');
     app.innerHTML = `
-      <div class="seg" id="filtro">${['todos', 'rascunho', 'enviado', 'aprovado', 'recusado'].map((s) => `<button data-f="${s}" class="${f === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : STATUS[s]}${s !== 'todos' && cont(s) ? ' ' + cont(s) : ''}</button>`).join('')}</div>
+      <div class="seg wrap" id="filtro">${['todos', 'rascunho', 'enviado', 'aprovado', 'recusado'].map((s) => `<button data-f="${s}" class="${f === s ? 'on' : ''}">${s === 'todos' ? 'Todos' : STATUS[s]}${s !== 'todos' && cont(s) ? ' ' + cont(s) : ''}</button>`).join('')}</div>
       <div class="row"><input class="in grow" id="busca" placeholder="Buscar por cliente ou número" value="${h(q.b || '')}" type="search"><a class="btn line sm" href="#/produtos" style="white-space:nowrap">🏷️ Produtos</a></div>
       <div class="card">${lista.length ? `<div class="list">${lista.map((o) => {
         const t = C.calcOrcamento(o).total;
@@ -405,11 +405,11 @@
           ${topo('📐 Perfil ' + (i + 1))}
           ${selectProduto(it)}
           ${produtoDoItem(it) ? '' : `<input class="in" data-k="nome" value="${h(it.nome)}" placeholder="Nome do perfil (ex.: Calha moldura)">`}
-          <div class="grid2"><label class="f">Material${selectMaterial(it.material)}</label>
-          <label class="f">Metros lineares<input class="in" data-k="metros" inputmode="decimal" value="${h(it.metros)}" placeholder="0,0"></label></div>
+          <label class="f">Material${selectMaterial(it.material)}</label>
+          <label class="f">Metros lineares<input class="in" data-k="metros" inputmode="decimal" value="${h(it.metros)}" placeholder="0,0"></label>
           <label class="f">Abas do perfil (cm), separadas por +<input class="in" data-k="abas" inputmode="decimal" value="${h(it.abas)}" placeholder="3 + 2 + 12 + 15 + 10 + 3"></label>
           <div data-svg>${svgChapa(it.abas)}</div>
-          <div class="seg" data-modo>${[['m2', 'Preço por m² de chapa'], ['ml', 'Preço por metro linear']].map(([v, l]) => `<button type="button" data-v="${v}" class="${(it.modo || 'm2') === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+          <div class="seg" data-modo>${[['m2', 'Por m² de chapa'], ['ml', 'Por metro linear']].map(([v, l]) => `<button type="button" data-v="${v}" class="${(it.modo || 'm2') === v ? 'on' : ''}">${l}</button>`).join('')}</div>
           <label class="f"><span data-plbl>${it.modo === 'ml' ? 'Preço do metro linear (R$)' : 'Preço do m² de chapa (R$)'}</span><input class="in" data-k="preco" inputmode="decimal" value="${h(it.preco)}" placeholder="0,00"></label>
           <div class="calc" data-calc></div>
           <div class="pecas" data-pecas></div>
@@ -433,7 +433,7 @@
         <label class="f">Cliente${selectCliente(orc.clienteId)}</label>
         <button class="btn sm ghost" id="novoCli" type="button">+ Cadastrar cliente novo</button>
         <div class="grid2"><label class="f">Data<input class="in" type="date" id="data" value="${h(orc.data)}"></label>
-        <label class="f">Validade (dias)<input class="in" id="validade" inputmode="numeric" value="${h(orc.validadeDias)}"></label></div>
+        <label class="f">Validade<select class="in" id="validade">${[...new Set([7, 10, 15, 20, 30, 45, 60, Number(orc.validadeDias) || 15])].sort((a, b) => a - b).map((d) => `<option value="${d}" ${Number(orc.validadeDias) === d ? 'selected' : ''}>${d} dias</option>`).join('')}</select></label></div>
         <label class="f">Local do serviço (se diferente do cadastro)<input class="in" id="local" value="${h(orc.local)}"></label>
       </div>
       <div class="card stack"><h3>Itens</h3><div class="stack" id="itens"></div>
@@ -559,7 +559,7 @@
     const bindCampo = (sel, fn) => $(sel).addEventListener('input', (e) => { fn(e.target.value); atualizarTotais(); agendarSalvar(); });
     $('#cliente').addEventListener('change', (e) => { orc.clienteId = e.target.value; agendarSalvar(); renderAcoes(); });
     bindCampo('#data', (v) => { orc.data = v; });
-    bindCampo('#validade', (v) => { orc.validadeDias = Number(v) || 15; });
+    $('#validade').addEventListener('change', (e) => { orc.validadeDias = Number(e.target.value) || 15; agendarSalvar(); });
     bindCampo('#local', (v) => { orc.local = v; });
     bindCampo('#desconto', (v) => { orc.desconto = v; });
     bindCampo('#cPrazo', (v) => { orc.condicoes.prazo = v; });
@@ -691,7 +691,7 @@
         ${c.telefone ? `<a class="btn vio block" target="_blank" rel="noopener" href="${waLink(c.telefone, msgCamp)}" data-camp>Enviar convite de manutenção</a>` : ''}</div>` : ''}
       <div class="card"><h3>Orçamentos</h3>${orcs.length ? `<div class="list">${orcs.map((o) => `<a class="li" href="#/orcamento/${o.id}"><div class="grow"><div class="t">nº ${String(o.numero).padStart(4, '0')} · ${C.fmtMoeda(C.calcOrcamento(o).total)}</div><div class="d">${dataBR(o.data)} · ${(o.itens || []).map((i) => i.nome || i.descricao).filter(Boolean).slice(0, 3).join(', ')}</div></div><span class="tag s-${o.status}">${STATUS[o.status]}</span></a>`).join('')}</div>` : '<div class="muted sm">Nenhum orçamento.</div>'}</div>
       <div class="card"><h3>Histórico na agenda</h3>${cps.length ? `<div class="list">${cps.map((x) => `<div class="li ${x.status === 'concluido' ? '' : ''}"><div class="grow"><div class="t">${h(TIPOS[x.tipo])}</div><div class="d">${dataBR(x.data)} ${h(x.hora || '')}${x.notas ? ' · ' + h(x.notas) : ''}</div></div><span class="tag ${x.status === 'concluido' ? 't-instalacao' : 't-orcamento'}">${x.status === 'concluido' ? 'Feito' : 'Pendente'}</span></div>`).join('')}</div>` : '<div class="muted sm">Nada na agenda ainda.</div>'}
-        <hr class="sep"><label class="f" style="margin-top:8px">Serviço antigo (antes do app)<input class="in" type="date" id="ultManual" value="${h(c.ultimoServicoManual || '')}"></label></div>`;
+        <hr class="sep"><label class="f" style="margin-top:8px">Último serviço feito antes de usar o app (opcional)<input class="in" type="date" id="ultManual" value="${h(c.ultimoServicoManual || '')}"></label></div>`;
     const camp = $('[data-camp]'); if (camp) camp.addEventListener('click', () => { c.ultimoConvite = hoje(); S.upsert('clientes', c); });
     $('#ultManual').addEventListener('change', (e) => { c.ultimoServicoManual = e.target.value; S.upsert('clientes', c); toast('Data registrada'); render(); });
   }, true);
@@ -806,7 +806,7 @@
          <label class="f">Material (opcional)<select class="in" id="fMat"><option value="">— qualquer —</option>${mats.map((m) => `<option ${p.material === m ? 'selected' : ''}>${h(m)}</option>`).join('')}</select></label>
          <label class="f">Abas do perfil (cm)<input class="in" id="fAbas" inputmode="decimal" value="${h(p.abas)}" placeholder="3 + 2 + 12 + 15 + 10 + 3"></label>
          <div id="fSvg">${svgChapa(p.abas)}</div>
-         <div class="seg" id="fModo">${[['m2', 'Preço por m² de chapa'], ['ml', 'Preço por metro linear']].map(([v, l]) => `<button type="button" data-v="${v}" class="${(p.modo || 'm2') === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
+         <div class="seg" id="fModo">${[['m2', 'Por m² de chapa'], ['ml', 'Por metro linear']].map(([v, l]) => `<button type="button" data-v="${v}" class="${(p.modo || 'm2') === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
       : `<label class="f">Descrição<input class="in" id="fNome" value="${h(p.descricao)}" placeholder="Ex.: Suporte de calha"></label>
          <label class="f">Unidade<select class="in" id="fUn">${['un', 'm', 'm²', 'vb', 'h'].map((u) => `<option ${p.unidade === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label>`;
     modal(`<h2>${novo ? 'Novo produto' : 'Editar produto'}</h2><div class="stack">${campos}
@@ -861,14 +861,15 @@
       <div class="card stack"><h3>Empresa (aparece no PDF)</h3>
         <label class="f">Nome da empresa<input class="in" data-e="nome" value="${h(e.nome)}"></label>
         <label class="f">Responsável<input class="in" data-e="responsavel" value="${h(e.responsavel)}"></label>
-        <div class="grid2"><label class="f">CNPJ<input class="in" data-e="cnpj" value="${h(e.cnpj)}"></label><label class="f">Telefone<input class="in" data-e="telefone" type="tel" value="${h(e.telefone)}"></label></div>
+        <label class="f">CNPJ<input class="in" data-e="cnpj" inputmode="numeric" value="${h(e.cnpj)}"></label>
+        <label class="f">Telefone / WhatsApp<input class="in" data-e="telefone" type="tel" inputmode="tel" value="${h(e.telefone)}" placeholder="(34) 9 9999-9999"></label>
         <label class="f">Endereço<input class="in" data-e="endereco" value="${h(e.endereco)}"></label>
       </div>
       <a class="card row" href="#/produtos" style="text-decoration:none;color:inherit"><span style="font-size:24px">🏷️</span><div class="grow"><b>Produtos e preços</b><div class="sm muted">${c.perfis.length} perfis · ${c.itensPadrao.length} peças e serviços</div></div><span class="muted" style="font-size:22px">›</span></a>
       <div class="card stack"><h3>Padrões do orçamento</h3>
-        <label class="f">Materiais (separados por vírgula)<input class="in" id="materiais" value="${h((c.materiais || []).join(', '))}"></label>
+        <label class="f">Materiais (separados por vírgula)<textarea class="in" id="materiais" rows="2" style="min-height:64px">${h((c.materiais || []).join(', '))}</textarea></label>
         <div class="grid2"><label class="f">Validade (dias)<input class="in" id="validade" inputmode="numeric" value="${h(c.validadeDias)}"></label><label class="f">Próximo nº<input class="in" id="prox" inputmode="numeric" value="${h(c.proximoNumero)}"></label></div>
-        <label class="f">Dobradeira: comprimento máximo da peça (m)<input class="in" id="dobra" inputmode="decimal" value="${h(C.fmtNum(c.dobraMax || 6))}"></label>
+        <label class="f">Comprimento máximo da dobradeira (m)<input class="in" id="dobra" inputmode="decimal" value="${h(C.fmtNum(c.dobraMax || 6))}"></label>
         <label class="f">Prazo de execução<input class="in" data-c="prazo" value="${h(c.condicoes.prazo)}"></label>
         <label class="f">Forma de pagamento<input class="in" data-c="pagamento" value="${h(c.condicoes.pagamento)}"></label>
         <label class="f">Garantia<input class="in" data-c="garantia" value="${h(c.condicoes.garantia)}"></label>
@@ -881,7 +882,7 @@
       <div class="card stack"><h3>Demonstração</h3><div class="sm muted">Carrega clientes e orçamentos fictícios para mostrar o app. Não use depois de começar a cadastrar dados reais.</div>
         <button class="btn line block" id="demo">Carregar dados de exemplo</button>
         <button class="btn line block" id="zerar" style="color:var(--bad)">Apagar todos os dados</button></div>
-      <div class="sm muted" style="text-align:center">OrçaCalha v1.1.3 · funciona sem internet</div>`;
+      <div class="sm muted" style="text-align:center">OrçaCalha v1.2.0 · funciona sem internet</div>`;
 
     $$('[data-e]').forEach((i) => i.addEventListener('change', () => { e[i.dataset.e] = i.value.trim(); S.save(); toast('Salvo'); }));
     $$('[data-c]').forEach((i) => i.addEventListener('change', () => { c.condicoes[i.dataset.c] = i.value.trim(); S.save(); toast('Salvo'); }));
