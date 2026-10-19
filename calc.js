@@ -66,19 +66,49 @@
     return { itens, subtotal, desconto, total };
   }
 
-  /** Lista de corte: agrupa perfis por material e largura de desenvolvimento. */
-  function listaCorte(orc) {
+  /** Divide o comprimento em peças que cabem na dobradeira (padrão 6 m). */
+  function pecasCorte(metros, max) {
+    const m = parseNum(metros); const lim = parseNum(max) || 6;
+    if (m <= 0) return { pecas: [], inteiras: 0, resto: 0, total: 0, emendas: 0, max: lim };
+    let inteiras = Math.floor((m + 1e-9) / lim);
+    let resto = round2(m - inteiras * lim);
+    if (resto < 0.005) resto = 0;
+    const pecas = Array(inteiras).fill(lim);
+    if (resto) pecas.push(resto);
+    return { pecas, inteiras, resto, total: pecas.length, emendas: Math.max(0, pecas.length - 1), max: lim };
+  }
+
+  /** Texto curto: "2 × 6 m + 1 × 0,5 m". */
+  function descPecas(pc) {
+    if (!pc.total) return '';
+    const partes = [];
+    if (pc.inteiras) partes.push(pc.inteiras + ' × ' + fmtNum(pc.max) + ' m');
+    if (pc.resto) partes.push('1 × ' + fmtNum(pc.resto) + ' m');
+    return partes.join(' + ');
+  }
+
+  /** Lista de corte: agrupa perfis por material e largura de desenvolvimento,
+   *  já dividindo cada perfil em peças de no máximo `max` metros (dobradeira). */
+  function listaCorte(orc, max) {
+    const lim = parseNum(max) || 6;
     const grupos = {};
     (orc.itens || []).filter((i) => i.tipo === 'perfil').forEach((i) => {
       const c = calcPerfil(i);
       if (!c.desenvolvimento || !c.metros) return;
       const key = (i.material || 'Chapa') + '|' + c.desenvolvimento;
-      if (!grupos[key]) grupos[key] = { material: i.material || 'Chapa', largura: c.desenvolvimento, metros: 0, areaM2: 0, perfis: [] };
-      grupos[key].metros = round2(grupos[key].metros + c.metros);
-      grupos[key].areaM2 = round2(grupos[key].areaM2 + c.areaM2);
-      grupos[key].perfis.push(i.nome || 'Perfil');
+      if (!grupos[key]) grupos[key] = { material: i.material || 'Chapa', largura: c.desenvolvimento, metros: 0, areaM2: 0, perfis: [], pecas: {}, totalPecas: 0, emendas: 0 };
+      const g = grupos[key];
+      const pc = pecasCorte(c.metros, lim);
+      g.metros = round2(g.metros + c.metros);
+      g.areaM2 = round2(g.areaM2 + c.areaM2);
+      g.perfis.push(i.nome || 'Perfil');
+      pc.pecas.forEach((len) => { const k = String(len); g.pecas[k] = (g.pecas[k] || 0) + 1; });
+      g.totalPecas += pc.total; g.emendas += pc.emendas;
     });
-    return Object.values(grupos).sort((a, b) => b.largura - a.largura);
+    return Object.values(grupos).map((g) => {
+      g.pecasLista = Object.entries(g.pecas).map(([len, qtd]) => ({ comprimento: Number(len), qtd })).sort((a, b) => b.comprimento - a.comprimento);
+      return g;
+    }).sort((a, b) => b.largura - a.largura);
   }
 
   function fmtMoeda(n) {
@@ -106,7 +136,7 @@
     return String(fone || '').trim();
   }
 
-  const api = { fmtFone, parseNum, parseAbas, desenvolvimentoCm, calcPerfil, calcItem, calcLinha, calcOrcamento, listaCorte, fmtMoeda, fmtNum, foneWhats, round2 };
+  const api = { pecasCorte, descPecas, fmtFone, parseNum, parseAbas, desenvolvimentoCm, calcPerfil, calcItem, calcLinha, calcOrcamento, listaCorte, fmtMoeda, fmtNum, foneWhats, round2 };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Calc = api;
 })(typeof self !== 'undefined' ? self : this);

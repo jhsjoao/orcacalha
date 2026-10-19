@@ -29,6 +29,7 @@
           endereco: 'Rua Joaquim Oliveira Carvalho, 325, Centro, Indianópolis/MG',
         },
         proximoNumero: 1,
+        dobraMax: 6,
         validadeDias: 15,
         condicoes: {
           prazo: 'A combinar conforme agenda',
